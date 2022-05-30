@@ -1,0 +1,8 @@
+# IDE
+.idea
+
+# Compiled bin
+**.pyc
+
+# Local test
+test.local.py
