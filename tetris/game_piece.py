@@ -6,6 +6,13 @@ from color import Color
 
 SHAPE_BOX_SIZE = 4
 
+SHAPE_NONE = [
+    [0, 0, 0, 0,
+     0, 0, 0, 0,
+     0, 0, 0, 0,
+     0, 0, 0, 0],
+]
+
 SHAPE_I = [
     [0, 1, 0, 0,
      0, 1, 0, 0,
@@ -132,6 +139,7 @@ class Piece:
         return self.shapes[self.rotation]
 
 
+PIECE_NONE = Piece(SHAPE_NONE, Color.WHITE)
 PIECE_I = Piece(SHAPE_I, Color.LIGHT_BLUE)
 PIECE_O = Piece(SHAPE_O, Color.YELLOW)
 PIECE_L = Piece(SHAPE_L, Color.ORANGE)

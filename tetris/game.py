@@ -13,21 +13,39 @@ class GameStatus(Enum):
 
 
 class GameState:
+    _DATA_INDEX_FROZEN_BLOCKS = 0
+    _DATA_INDEX_FROZEN_BLOCKS_COLOR_CODE = 1
+    _DATA_INDEX_FALLING_BLOCKS = 2
+    _DATA_INDEX_FALLING_BLOCKS_COLOR_CODE = 3
+
     def __init__(self, rows, columns):
         self.rows = rows
         self.columns = columns
         self.status = GameStatus.RUNNING
         self.score = 0
-        self.frozen_blocks = np.zeros((rows, columns), dtype=np.int)
-        self.frozen_blocks_color_code = np.zeros((rows, columns), dtype=np.int)
-        self.falling_blocks = np.zeros((rows, columns), dtype=np.int)
-        self.falling_blocks_color_code = np.zeros((rows, columns), dtype=np.int)
-        self.falling_piece = PIECE_O
+        self.data = np.zeros((4, rows, columns), dtype=np.int)
+        self.falling_piece = PIECE_NONE
         self.falling_piece_location = np.zeros(2, dtype=np.int)
         self.next_falling_piece = None
 
     def numpy(self):
         return np.vstack((self.frozen_blocks, self.falling_blocks)).reshape((-1, self.rows, self.columns))
+
+    @property
+    def frozen_blocks(self):
+        return self.data[self._DATA_INDEX_FROZEN_BLOCKS]
+
+    @property
+    def frozen_blocks_color_code(self):
+        return self.data[self._DATA_INDEX_FROZEN_BLOCKS_COLOR_CODE]
+
+    @property
+    def falling_blocks(self):
+        return self.data[self._DATA_INDEX_FALLING_BLOCKS]
+
+    @property
+    def falling_blocks_color_code(self):
+        return self.data[self._DATA_INDEX_FALLING_BLOCKS_COLOR_CODE]
 
     @property
     def blocks(self):
@@ -176,33 +194,17 @@ def user_rotate_piece(state: GameState):
 
 
 def remove_complete_lines(state: GameState):
-    # @fixme won't work because coloring array is not changed.
-
     removed_lines_count = 0
     blocks = state.frozen_blocks
+    data = state.data
 
     row = ROWS - 1
-
-    # remove complete lines
     while row >= 0:
-        if blocks[row].sum() == COLS:
-            blocks[row] = 0
+        while blocks[row].sum() == COLS:
+            data[:, 1:row+1] = data[:, 0:row]
+            data[:, 0] = 0
             removed_lines_count = removed_lines_count + 1
         row = row - 1
-
-    # drop suspending blocks to the ground or onto other blocks
-    for col in range(COLS):
-        bottom = ROWS - 1
-        row = ROWS - 1
-        while row >= 0:
-            while row >= 0 and blocks[row, col] == 0:
-                row = row - 1
-            blocks[bottom, col] = blocks[row, col]
-            row = row - 1
-            bottom = bottom - 1
-        while bottom >= 0:
-            blocks[bottom, col] = 0
-            bottom = bottom - 1
 
     state.score = state.score + removed_lines_count
 
