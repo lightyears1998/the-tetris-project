@@ -38,7 +38,7 @@ class GameState:
         return self.frozen_blocks_color_code + self.falling_blocks_color_code
 
 
-def is_piece_hit_bottom_or_other_blocks(state: GameState):
+def is_piece_hitting_bottom_or_other_blocks(state: GameState):
     row, col = state.falling_piece_location
     for i in range(SHAPE_BOX_SIZE):
         for j in range(SHAPE_BOX_SIZE):
@@ -51,14 +51,19 @@ def is_piece_hit_bottom_or_other_blocks(state: GameState):
 
 
 def detect_out_of_boundary_or_collision(frozen_blocks: np.ndarray, falling_piece: Piece, falling_piece_location: np.ndarray) -> bool:
-    # @todo detects out of boundary
-
-    row, col = falling_piece_location
+    piece_row, piece_col = falling_piece_location
     falling_piece_shape = falling_piece.shape
     for i in range(SHAPE_BOX_SIZE):
         for j in range(SHAPE_BOX_SIZE):
-            if falling_piece_shape[i * SHAPE_BOX_SIZE + j] == 1 and frozen_blocks[row + i][col + j] == 1:
-                return True
+            if falling_piece_shape[i * SHAPE_BOX_SIZE + j] == 1:
+                row = piece_row + i
+                col = piece_col + j
+                if row < 0 or row >= ROWS:
+                    return True
+                if col < 0 or col >= COLS:
+                    return True
+                if frozen_blocks[row][col] == 1:
+                    return True
     return False
 
 
@@ -117,8 +122,89 @@ def move_piece_down(state: GameState):
     update_falling_blocks(state)
 
 
+def move_piece_left(state: GameState):
+    state.falling_piece_location[1] = state.falling_piece_location[1] - 1
+    update_falling_blocks(state)
+
+
+def move_piece_right(state: GameState):
+    state.falling_piece_location[1] = state.falling_piece_location[1] + 1
+    update_falling_blocks(state)
+
+
+def rotate_piece(state: GameState):
+    state.falling_piece.rotation = (state.falling_piece.rotation + 1) % len(state.falling_piece.shapes)
+    update_falling_blocks(state)
+
+
+def drop_piece(state: GameState):
+    while not is_piece_hitting_bottom_or_other_blocks(state):
+        move_piece_down(state)
+    update_falling_blocks(state)
+
+
+def user_move_piece_down(state: GameState):
+    neo_location = state.falling_piece_location.copy()
+    neo_location[0] = neo_location[0] + 1
+    conflict = detect_out_of_boundary_or_collision(state.frozen_blocks, state.falling_piece, neo_location)
+    if not conflict:
+        move_piece_down(state)
+
+
+def user_move_piece_left(state: GameState):
+    neo_location = state.falling_piece_location.copy()
+    neo_location[1] = neo_location[1] - 1
+    conflict = detect_out_of_boundary_or_collision(state.frozen_blocks, state.falling_piece, neo_location)
+    if not conflict:
+        move_piece_left(state)
+
+
+def user_move_piece_right(state: GameState):
+    neo_location = state.falling_piece_location.copy()
+    neo_location[1] = neo_location[1] + 1
+    conflict = detect_out_of_boundary_or_collision(state.frozen_blocks, state.falling_piece, neo_location)
+    if not conflict:
+        move_piece_right(state)
+
+
+def user_rotate_piece(state: GameState):
+    neo_piece = copy.copy(state.falling_piece)
+    neo_piece.rotation = (neo_piece.rotation + 1) % len(neo_piece.shapes)
+    conflict = detect_out_of_boundary_or_collision(state.frozen_blocks, neo_piece, state.falling_piece_location)
+    if not conflict:
+        rotate_piece(state)
+
+
 def remove_complete_lines(state: GameState):
-    return 0
+    # @fixme won't work because coloring array is not changed.
+
+    removed_lines_count = 0
+    blocks = state.frozen_blocks
+
+    row = ROWS - 1
+
+    # remove complete lines
+    while row >= 0:
+        if blocks[row].sum() == COLS:
+            blocks[row] = 0
+            removed_lines_count = removed_lines_count + 1
+        row = row - 1
+
+    # drop suspending blocks to the ground or onto other blocks
+    for col in range(COLS):
+        bottom = ROWS - 1
+        row = ROWS - 1
+        while row >= 0:
+            while row >= 0 and blocks[row, col] == 0:
+                row = row - 1
+            blocks[bottom, col] = blocks[row, col]
+            row = row - 1
+            bottom = bottom - 1
+        while bottom >= 0:
+            blocks[bottom, col] = 0
+            bottom = bottom - 1
+
+    state.score = state.score + removed_lines_count
 
 
 def new_game():
@@ -131,7 +217,7 @@ def new_game():
 
 
 def step(state: GameState):
-    piece_has_hit_bottom_or_other_blocks = is_piece_hit_bottom_or_other_blocks(state)
+    piece_has_hit_bottom_or_other_blocks = is_piece_hitting_bottom_or_other_blocks(state)
     if piece_has_hit_bottom_or_other_blocks:
         froze_falling_piece(state)
         remove_complete_lines(state)

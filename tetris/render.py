@@ -7,7 +7,7 @@ from game import *
 
 pygame.init()
 
-FPS = 60
+FPS = 120
 
 WINDOW_WIDTH = 400
 WINDOW_HEIGHT = 600
@@ -81,7 +81,7 @@ def draw_tetris_container(surface: pygame.Surface, state: GameState):
                 color = COLOR_MAPPING[color_codes[row, col]]
                 pygame.draw.rect(surface, color, rect)
     if state.status == GameStatus.TERMINATED:
-        draw_text(surface, "Game over", 64)
+        draw_text(surface, "Game Over", 64)
 
 
 def render():
@@ -97,7 +97,7 @@ def render():
         clock.tick(FPS)
         frame_count = (frame_count + 1) % FPS
 
-        if frame_count % 2 == 0:
+        if frame_count % 60 == 0:
             if state.status == GameStatus.RUNNING:
                 step(state)
 
@@ -112,7 +112,17 @@ def render():
             if event.type == pygame.QUIT:
                 run = False
             elif event.type == pygame.KEYDOWN:
-                print(event)
+                key = event.key
+                if key == pygame.K_SPACE:
+                    drop_piece(state)
+                elif key == pygame.K_RIGHT:
+                    user_move_piece_right(state)
+                elif key == pygame.K_LEFT:
+                    user_move_piece_left(state)
+                elif key == pygame.K_UP:
+                    user_rotate_piece(state)
+                elif key == pygame.K_DOWN:
+                    user_move_piece_down(state)
 
     pygame.quit()
 
