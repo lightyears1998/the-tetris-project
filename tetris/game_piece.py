@@ -27,38 +27,38 @@ SHAPE_O = [
 SHAPE_L = [
     [0, 1, 0, 0,
      0, 1, 0, 0,
-     0, 1, 0, 0,
-     0, 1, 1, 0],
+     0, 1, 1, 0,
+     0, 0, 0, 0],
     [0, 0, 0, 0,
-     1, 1, 1, 1,
-     1, 0, 0, 0,
+     0, 1, 1, 1,
+     0, 1, 0, 0,
      0, 0, 0, 0],
     [0, 1, 1, 0,
      0, 0, 1, 0,
      0, 0, 1, 0,
-     0, 0, 1, 0],
+     0, 0, 0, 0],
     [0, 0, 0, 0,
-     0, 0, 0, 1,
-     1, 1, 1, 1,
+     0, 0, 1, 0,
+     1, 1, 1, 0,
      0, 0, 0, 0],
 ]
 
 SHAPE_J = [
     [0, 0, 1, 0,
      0, 0, 1, 0,
-     0, 0, 1, 0,
-     0, 1, 1, 0],
-    [0, 0, 0, 0,
-     1, 0, 0, 0,
-     1, 1, 1, 1,
+     0, 1, 1, 0,
      0, 0, 0, 0],
-    [0, 1, 1, 0,
+    [0, 0, 0, 0,
      0, 1, 0, 0,
+     0, 1, 1, 1,
+     0, 0, 0, 0],
+    [0, 0, 0, 0,
+     0, 1, 1, 0,
      0, 1, 0, 0,
      0, 1, 0, 0],
     [0, 0, 0, 0,
-     1, 1, 1, 1,
-     0, 0, 0, 1,
+     1, 1, 1, 0,
+     0, 0, 1, 0,
      0, 0, 0, 0],
 ]
 
@@ -144,7 +144,6 @@ PIECES = [PIECE_I, PIECE_O, PIECE_L, PIECE_J, PIECE_T, PIECE_S, PIECE_Z]
 
 
 def get_random_piece():
-    candidate = random.choice(PIECES)
-    candidate = copy.copy(candidate)
+    candidate = copy.copy(random.choice(PIECES))
     candidate.rotation = random.randint(0, len(candidate.shapes) - 1)
     return candidate
