@@ -90,7 +90,7 @@ def get_reward(state: GameState):
 
 
 def perform_action(state: GameState, action_code):
-    rotation_times = action_code // GAME_COLS
+    rotation_times = torch.div(action_code, GAME_COLS, rounding_mode='trunc')
     while rotation_times > 0:
         user_rotate_piece(state)
         rotation_times -= 1
