@@ -26,7 +26,7 @@ class GameState:
         self.data = np.zeros((4, rows, columns), dtype=np.int)
         self.falling_piece = PIECE_NONE
         self.falling_piece_location = np.zeros(2, dtype=np.int)
-        self.next_falling_piece = None
+        self.next_falling_piece = PIECE_NONE
 
     def numpy(self):
         return np.vstack((self.frozen_blocks, self.falling_blocks)).reshape((-1, self.rows, self.columns))
@@ -125,7 +125,7 @@ def stage_next_falling_piece(state: GameState):
         attempt = attempt + 1
 
     if conflict:
-        state.falling_piece = SHAPE_NONE
+        state.falling_piece = PIECE_NONE
         update_falling_blocks(state)
         return False
 
@@ -219,6 +219,9 @@ def new_game():
 
 
 def step(state: GameState):
+    if state.status == GameStatus.TERMINATED:
+        return
+
     piece_has_hit_bottom_or_other_blocks = is_piece_hitting_bottom_or_other_blocks(state)
     if piece_has_hit_bottom_or_other_blocks:
         froze_falling_piece(state)
