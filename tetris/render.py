@@ -49,20 +49,20 @@ def draw_next_piece_hint(surface: pygame.Surface, state: GameState):
 
 
 def draw_tetris_container(surface: pygame.Surface, state: GameState):
-    container_width = (COLS + 1) * GAP_WIDTH + COLS * GRID_SIZE
-    container_height = (ROWS + 1) * GAP_WIDTH + ROWS * GRID_SIZE
+    container_width = (GAME_COLS + 1) * GAP_WIDTH + GAME_COLS * GRID_SIZE
+    container_height = (GAME_ROWS + 1) * GAP_WIDTH + GAME_ROWS * GRID_SIZE
 
     container_pos_left = (surface.get_width() - container_width) / 2
     container_pos_top = (surface.get_height() - container_height) / 2
 
     # horizontal lines
-    for row in range(ROWS + 1):
+    for row in range(GAME_ROWS + 1):
         start_pos = (container_pos_left, container_pos_top + row * (GAP_WIDTH + GRID_SIZE))
         end_pos = (container_pos_left + container_width, container_pos_top + row * (GAP_WIDTH + GRID_SIZE))
         pygame.draw.line(surface, COLOR_MAPPING[Color.GREY], start_pos, end_pos, width=GAP_WIDTH)
 
     # vertical lines
-    for col in range(COLS + 1):
+    for col in range(GAME_COLS + 1):
         start_pos = (container_pos_left + col * (GRID_SIZE + GAP_WIDTH), container_pos_top)
         end_pos = (container_pos_left + col * (GRID_SIZE + GAP_WIDTH), container_pos_top + container_height)
         pygame.draw.line(surface, COLOR_MAPPING[Color.GREY], start_pos, end_pos, width=GAP_WIDTH)
@@ -70,8 +70,8 @@ def draw_tetris_container(surface: pygame.Surface, state: GameState):
     # grids
     blocks = state.blocks
     color_codes = state.color_codes
-    for row in range(ROWS):
-        for col in range(COLS):
+    for row in range(GAME_ROWS):
+        for col in range(GAME_COLS):
             if blocks[row, col] == 1:
                 left = container_pos_left + GAP_WIDTH + col * (GAP_WIDTH + GRID_SIZE)
                 top = container_pos_top + GAP_WIDTH + row * (GAP_WIDTH + GRID_SIZE)

@@ -3,8 +3,9 @@ from enum import Enum
 from game_piece import *
 import copy
 
-ROWS = 20
-COLS = 10
+GAME_ROWS = 20
+GAME_COLS = 10
+GAME_ACTIONS = 5
 
 
 class GameStatus(Enum):
@@ -13,10 +14,10 @@ class GameStatus(Enum):
 
 
 class GameState:
-    _DATA_INDEX_FROZEN_BLOCKS = 0
-    _DATA_INDEX_FROZEN_BLOCKS_COLOR_CODE = 1
-    _DATA_INDEX_FALLING_BLOCKS = 2
-    _DATA_INDEX_FALLING_BLOCKS_COLOR_CODE = 3
+    DATA_INDEX_FROZEN_BLOCKS = 0
+    DATA_INDEX_FROZEN_BLOCKS_COLOR_CODE = 1
+    DATA_INDEX_FALLING_BLOCKS = 2
+    DATA_INDEX_FALLING_BLOCKS_COLOR_CODE = 3
 
     def __init__(self, rows, columns):
         self.rows = rows
@@ -33,19 +34,19 @@ class GameState:
 
     @property
     def frozen_blocks(self):
-        return self.data[self._DATA_INDEX_FROZEN_BLOCKS]
+        return self.data[self.DATA_INDEX_FROZEN_BLOCKS]
 
     @property
     def frozen_blocks_color_code(self):
-        return self.data[self._DATA_INDEX_FROZEN_BLOCKS_COLOR_CODE]
+        return self.data[self.DATA_INDEX_FROZEN_BLOCKS_COLOR_CODE]
 
     @property
     def falling_blocks(self):
-        return self.data[self._DATA_INDEX_FALLING_BLOCKS]
+        return self.data[self.DATA_INDEX_FALLING_BLOCKS]
 
     @property
     def falling_blocks_color_code(self):
-        return self.data[self._DATA_INDEX_FALLING_BLOCKS_COLOR_CODE]
+        return self.data[self.DATA_INDEX_FALLING_BLOCKS_COLOR_CODE]
 
     @property
     def blocks(self):
@@ -76,9 +77,9 @@ def detect_out_of_boundary_or_collision(frozen_blocks: np.ndarray, falling_piece
             if falling_piece_shape[i * SHAPE_BOX_SIZE + j] == 1:
                 row = piece_row + i
                 col = piece_col + j
-                if row < 0 or row >= ROWS:
+                if row < 0 or row >= GAME_ROWS:
                     return True
-                if col < 0 or col >= COLS:
+                if col < 0 or col >= GAME_COLS:
                     return True
                 if frozen_blocks[row][col] == 1:
                     return True
@@ -118,7 +119,7 @@ def stage_next_falling_piece(state: GameState):
     stage_location = None
 
     while attempt < SHAPE_BOX_SIZE:
-        stage_location = np.array([0 - attempt, (COLS - SHAPE_BOX_SIZE) / 2], dtype=np.int)
+        stage_location = np.array([0 - attempt, (GAME_COLS - SHAPE_BOX_SIZE) / 2], dtype=np.int)
         conflict = detect_out_of_boundary_or_collision(state.frozen_blocks, state.next_falling_piece, stage_location)
         if not conflict:
             break
@@ -198,9 +199,9 @@ def remove_complete_lines(state: GameState):
     blocks = state.frozen_blocks
     data = state.data
 
-    row = ROWS - 1
+    row = GAME_ROWS - 1
     while row >= 0:
-        while blocks[row].sum() == COLS:
+        while blocks[row].sum() == GAME_COLS:
             data[:, 1:row+1] = data[:, 0:row]
             data[:, 0] = 0
             removed_lines_count = removed_lines_count + 1
@@ -210,7 +211,7 @@ def remove_complete_lines(state: GameState):
 
 
 def new_game():
-    state = GameState(ROWS, COLS)
+    state = GameState(GAME_ROWS, GAME_COLS)
     generate_next_falling_piece(state)
     stage_next_falling_piece(state)
     generate_next_falling_piece(state)

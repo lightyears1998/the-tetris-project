@@ -4,5 +4,9 @@
 # Compiled bin
 **.pyc
 
+# Model Weights
+**.pth
+**.pt
+
 # Local test
 test.local.py
