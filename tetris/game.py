@@ -24,13 +24,47 @@ class GameState:
         self.columns = columns
         self.status = GameStatus.RUNNING
         self.score = 0
+        self.op_left = 0
+        self.op_right = 0
+        self.op_rotate = 0
+        self.op_soft_drop = 0
+        self.op_hard_drop = 0
+        self.single_line_cleared = 0
+        self.double_lines_cleared = 0
+        self.triple_lines_cleared = 0
+        self.tetris_line_cleared = 0  # i.e. quadruple lines cleared
+        self.soft_drop_distance = 0
+        self.hard_drop_distance = 0
         self.data = np.zeros((4, rows, columns), dtype=np.int)
         self.falling_piece = PIECE_NONE
         self.falling_piece_location = np.zeros(2, dtype=np.int)
         self.next_falling_piece = PIECE_NONE
 
+    def __str__(self):
+        block_statistics = 'block_count: {}\tblock_fill_rate: {}\n'.format(self.block_count, self.block_fill_rate)
+        op_statistics = 'op_left: {}\top_right: {}\top_rotate: {}\top_soft_drop: {}\top_hard_drop: {}\n'.format(
+            self.op_left, self.op_right, self.op_rotate, self.op_soft_drop, self.op_hard_drop)
+        line_statistics = 'single_line_cleared: {}\tdouble_lines_cleared: {}' \
+                          '\ttriple_lines_cleared: {}\ttetris_line_cleared {}\n'.format(
+                            self.single_line_cleared,
+                            self.double_lines_cleared,
+                            self.triple_lines_cleared,
+                            self.tetris_line_cleared
+        )
+        distance_statistics = 'soft_drop_distance: {}\thard_drop_distance: {}'.format(
+            self.soft_drop_distance, self.hard_drop_distance)
+        return block_statistics + op_statistics + line_statistics + distance_statistics
+
     def numpy(self):
         return np.vstack((self.frozen_blocks, self.falling_blocks)).reshape((-1, self.rows, self.columns))
+
+    @property
+    def block_count(self):
+        return np.sum(self.blocks)
+
+    @property
+    def block_fill_rate(self):
+        return self.block_count / (GAME_ROWS * GAME_COLS)
 
     @property
     def frozen_blocks(self):
@@ -69,7 +103,8 @@ def is_piece_hitting_bottom_or_other_blocks(state: GameState):
     return False
 
 
-def detect_out_of_boundary_or_collision(frozen_blocks: np.ndarray, falling_piece: Piece, falling_piece_location: np.ndarray) -> bool:
+def detect_out_of_boundary_or_collision(frozen_blocks: np.ndarray, falling_piece: Piece,
+                                        falling_piece_location: np.ndarray) -> bool:
     piece_row, piece_col = falling_piece_location
     falling_piece_shape = falling_piece.shape
     for i in range(SHAPE_BOX_SIZE):
@@ -157,9 +192,12 @@ def rotate_piece(state: GameState):
 
 
 def drop_piece(state: GameState):
+    move_distance = 0
     while not is_piece_hitting_bottom_or_other_blocks(state):
         move_piece_down(state)
+        move_distance += 1
     update_falling_blocks(state)
+    return move_distance
 
 
 def user_move_piece_down(state: GameState):
@@ -168,6 +206,9 @@ def user_move_piece_down(state: GameState):
     conflict = detect_out_of_boundary_or_collision(state.frozen_blocks, state.falling_piece, neo_location)
     if not conflict:
         move_piece_down(state)
+        state.soft_drop_distance += 1
+        state.op_soft_drop += 1
+        state.score += 1
 
 
 def user_move_piece_left(state: GameState):
@@ -176,6 +217,7 @@ def user_move_piece_left(state: GameState):
     conflict = detect_out_of_boundary_or_collision(state.frozen_blocks, state.falling_piece, neo_location)
     if not conflict:
         move_piece_left(state)
+        state.op_left += 1
 
 
 def user_move_piece_right(state: GameState):
@@ -184,6 +226,7 @@ def user_move_piece_right(state: GameState):
     conflict = detect_out_of_boundary_or_collision(state.frozen_blocks, state.falling_piece, neo_location)
     if not conflict:
         move_piece_right(state)
+        state.op_right += 1
 
 
 def user_rotate_piece(state: GameState):
@@ -192,6 +235,15 @@ def user_rotate_piece(state: GameState):
     conflict = detect_out_of_boundary_or_collision(state.frozen_blocks, neo_piece, state.falling_piece_location)
     if not conflict:
         rotate_piece(state)
+        state.op_rotate += 1
+
+
+def user_drop_piece(state: GameState):
+    move_distance = drop_piece(state)
+    if move_distance > 0:
+        state.op_hard_drop += 1
+        state.hard_drop_distance += move_distance
+        state.score += move_distance * 2
 
 
 def remove_complete_lines(state: GameState):
@@ -202,12 +254,29 @@ def remove_complete_lines(state: GameState):
     row = GAME_ROWS - 1
     while row >= 0:
         while blocks[row].sum() == GAME_COLS:
-            data[:, 1:row+1] = data[:, 0:row]
+            data[:, 1:row + 1] = data[:, 0:row]
             data[:, 0] = 0
             removed_lines_count = removed_lines_count + 1
         row = row - 1
 
-    state.score = state.score + removed_lines_count
+    if removed_lines_count == 0:
+        gained_score = 0
+    elif removed_lines_count == 1:
+        gained_score = 100
+        state.single_line_cleared += 1
+    elif removed_lines_count == 2:
+        gained_score = 300
+        state.double_lines_cleared += 1
+    elif removed_lines_count == 3:
+        gained_score = 500
+        state.triple_lines_cleared += 1
+    elif removed_lines_count == 4:
+        gained_score = 800
+        state.tetris_line_cleared += 1
+    else:
+        raise "TAKE A REST NOW! Clearing more than 4 lines at a single step is impossible."
+
+    state.score = state.score + gained_score
 
 
 def new_game():

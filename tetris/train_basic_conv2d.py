@@ -7,12 +7,13 @@ import torch
 from torch import optim as optim
 from torch import nn as nn
 from itertools import count
+import os
 
 BATCH_SIZE = 128
 GAMMA = 0.999
 EPS_START = 0.9
 EPS_END = 0.05
-EPS_DECAY = 2000
+EPS_DECAY = 10000
 TARGET_UPDATE = 10
 SAVE_INTERVAL = 1000
 
@@ -87,16 +88,17 @@ def perform_action(state: GameState, action_code):
     elif action_code == 3:
         user_rotate_piece(state)
     elif action_code == 4:
-        drop_piece(state)
+        user_drop_piece(state)
     return state
 
 
 def train():
     model_weight_filepath = "weights/{}.pth".format(type(target_net).__name__)
 
-    policy_net.load_state_dict(torch.load(model_weight_filepath))
-    target_net.load_state_dict(policy_net.state_dict())
-    target_net.eval()
+    if os.path.exists(model_weight_filepath):
+        policy_net.load_state_dict(torch.load(model_weight_filepath))
+        target_net.load_state_dict(policy_net.state_dict())
+        target_net.eval()
 
     episode_count = 5000
     episode_durations = []
@@ -132,8 +134,16 @@ def train():
                 break
 
         if episode % TARGET_UPDATE == 0:
-            print('max_score', np.max(episode_scores))
-            print('episode', episode, 'duration', episode_durations[-1], 'score', episode_scores[-1], 'selections_done', selections_done)
+            print('==== episode {} ===='.format(episode))
+            print(
+                'selections_done', selections_done,
+                'max_score', np.max(episode_scores),
+                'mean_score', np.mean(episode_scores[-10:]),
+                'mean_duration', np.mean(episode_durations[-10:]),
+                sep='\t'
+            )
+            print(game_state)
+            print(game_state.blocks)
             target_net.load_state_dict(policy_net.state_dict())
 
         if episode % SAVE_INTERVAL == 0:
