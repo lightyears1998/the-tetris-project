@@ -113,15 +113,17 @@ def render():
                 run = False
             elif event.type == pygame.KEYDOWN:
                 key = event.key
-                if key == pygame.K_SPACE:
+                if key == pygame.K_ESCAPE:
+                    state = new_game()
+                if key == pygame.K_SPACE: # drop
                     drop_piece(state)
-                elif key == pygame.K_RIGHT:
+                elif key == pygame.K_RIGHT: # move right
                     user_move_piece_right(state)
-                elif key == pygame.K_LEFT:
+                elif key == pygame.K_LEFT: # move left
                     user_move_piece_left(state)
-                elif key == pygame.K_UP:
+                elif key == pygame.K_UP: # rotate
                     user_rotate_piece(state)
-                elif key == pygame.K_DOWN:
+                elif key == pygame.K_DOWN: # move down
                     user_move_piece_down(state)
 
     pygame.quit()

@@ -125,7 +125,7 @@ def stage_next_falling_piece(state: GameState):
         attempt = attempt + 1
 
     if conflict:
-        state.falling_piece = None
+        state.falling_piece = SHAPE_NONE
         update_falling_blocks(state)
         return False
 
